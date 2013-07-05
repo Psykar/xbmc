@@ -364,6 +364,7 @@ class CAdvancedSettings : public ISettingCallback, public ISettingsHandler
 
     unsigned int m_cacheMemBufferSize;
     bool m_alwaysForceBuffer;
+    unsigned int m_cacheRateMultiplier;
 
     bool m_jsonOutputCompact;
     unsigned int m_jsonTcpPort;

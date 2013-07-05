@@ -155,7 +155,7 @@ int CDVDInputStreamFile::GetBlockSize()
 
 void CDVDInputStreamFile::SetReadRate(unsigned rate)
 {
-  unsigned maxrate = rate + 1024 * 1024 / 8;
+  unsigned maxrate = (rate + 1024 * 1024 / 8) * gadvancedSettings.m_cacheRateMultiplier;
   if(m_pFile->IoControl(IOCTRL_CACHE_SETRATE, &maxrate) >= 0)
     CLog::Log(LOGDEBUG, "CDVDInputStreamFile::SetReadRate - set cache throttle rate to %u bytes per second", maxrate);
 }
