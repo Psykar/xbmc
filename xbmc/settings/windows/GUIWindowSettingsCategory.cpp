@@ -1,6 +1,6 @@
 /*
- *      Copyright (C) 2005-2012 Team XBMC
- *      http://www.xbmc.org
+ *      Copyright (C) 2005-2013 Team XBMC
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@
 #include "utils/log.h"
 #include "utils/StringUtils.h"
 #include "view/ViewStateSettings.h"
+#include "GUIPassword.h"
 
 using namespace std;
 
@@ -91,7 +92,7 @@ static const SettingGroup s_settingGroupMap[] = { { SETTINGS_PICTURES,    "pictu
 CGUIWindowSettingsCategory::CGUIWindowSettingsCategory(void)
     : CGUIWindow(WINDOW_SETTINGS_MYPICTURES, "SettingsCategory.xml"),
       m_settings(CSettings::Get()),
-      m_iCategory(0), m_iSection(0),
+      m_iSetting(0), m_iCategory(0), m_iSection(0),
       m_pOriginalSpin(NULL),
       m_pOriginalRadioButton(NULL),
       m_pOriginalCategoryButton(NULL),
@@ -174,7 +175,13 @@ bool CGUIWindowSettingsCategory::OnMessage(CGUIMessage &message)
         if (m_delayedSetting != NULL && m_delayedSetting->GetID() != focusedControl)
         {
           m_delayedTimer.Stop();
-          CGUIMessage message(GUI_MSG_UPDATE_ITEM, GetID(), GetID(), 1); // param1 = 1 for "reset the control if it's invalid"
+          CGUIMessage message(GUI_MSG_UPDATE_ITEM, GetID(), m_delayedSetting->GetID(), 1); // param1 = 1 for "reset the control if it's invalid"
+          g_windowManager.SendThreadMessage(message, GetID());
+        }
+        // update the value of the previous setting (in case it was invalid)
+        else if (m_iSetting >= CONTROL_START_CONTROL && m_iSetting < (int)(CONTROL_START_CONTROL + m_settingControls.size()))
+        {
+          CGUIMessage message(GUI_MSG_UPDATE_ITEM, GetID(), m_iSetting, 1); // param1 = 1 for "reset the control if it's invalid"
           g_windowManager.SendThreadMessage(message, GetID());
         }
 
@@ -197,6 +204,7 @@ bool CGUIWindowSettingsCategory::OnMessage(CGUIMessage &message)
         }
         else if (focusedControl >= CONTROL_START_CONTROL && focusedControl < (int)(CONTROL_START_CONTROL + m_settingControls.size()))
         {
+          m_iSetting = focusedControl;
           CSetting *setting = GetSettingControl(focusedControl)->GetSetting();
           if (setting != NULL)
             SetDescription(setting->GetHelp());
@@ -238,6 +246,15 @@ bool CGUIWindowSettingsCategory::OnMessage(CGUIMessage &message)
         if (!delayedSetting->OnClick() && message.GetParam1() != 0)
           OnSettingChanged(delayedSetting->GetSetting());
         return true;
+      }
+      else if (message.GetControlId() >= CONTROL_START_CONTROL && message.GetControlId() < (int)(CONTROL_START_CONTROL + m_settingControls.size()))
+      {
+        BaseSettingControlPtr settingControl = GetSettingControl(message.GetControlId());
+        if (settingControl.get() != NULL && settingControl->GetSetting() != NULL)
+        {
+          OnSettingChanged(settingControl->GetSetting());
+          return true;
+        }
       }
       break;
     }
@@ -290,6 +307,10 @@ bool CGUIWindowSettingsCategory::OnAction(const CAction &action)
 
     case ACTION_SETTINGS_LEVEL_CHANGE:
     {
+      //Test if we can access the new level
+      if (!g_passwordManager.CheckSettingLevelLock(CViewStateSettings::Get().GetNextSettingLevel(), true))
+        return false;
+      
       CViewStateSettings::Get().CycleSettingLevel();
       CSettings::Get().Save();
 
@@ -415,6 +436,8 @@ void CGUIWindowSettingsCategory::SetupControls(bool createSettings /* = true */)
   
   // update the screen string
   SET_CONTROL_LABEL(CONTROL_SETTINGS_LABEL, section->GetLabel());
+  
+  SET_CONTROL_LABEL(CONTRL_BTN_LEVELS, 10036 + (int)CViewStateSettings::Get().GetSettingLevel());
 
   // get the categories we need
   m_categories = section->GetCategories(CViewStateSettings::Get().GetSettingLevel());
@@ -481,7 +504,7 @@ void CGUIWindowSettingsCategory::OnTimeout()
 
   // we send a thread message so that it's processed the following frame (some settings won't
   // like being changed during Render())
-  CGUIMessage message(GUI_MSG_UPDATE_ITEM, GetID(), GetID(), 1); // param1 = 1 for "reset the control if it's invalid"
+  CGUIMessage message(GUI_MSG_UPDATE_ITEM, GetID(), m_delayedSetting->GetID());
   g_windowManager.SendThreadMessage(message, GetID());
 }
 

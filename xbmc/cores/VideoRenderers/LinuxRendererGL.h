@@ -3,7 +3,7 @@
 
 /*
  *      Copyright (C) 2007-2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -300,6 +300,7 @@ protected:
                 , unsigned width,  unsigned height
                 , int stride, int bpp, void* data, GLuint* pbo = NULL );
 
+  void GetPlaneTextureSize(YUVPLANE& plane);
 
   Shaders::BaseYUV2RGBShader     *m_pYUVShader;
   Shaders::BaseVideoFilterShader *m_pVideoFilterShader;

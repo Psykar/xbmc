@@ -1,7 +1,7 @@
 #pragma once
 /*
  *      Copyright (C) 2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ public:
   std::string getString(int columnIndex);
   short getShort(int columnIndex);
   int  getInt(int columnIndex);
-  long getLong(int columnIndex);
+  int64_t getLong(int columnIndex);
   float getFloat(int columnIndex);
   double getDouble(int columnIndex);
   int  getType(int columnIndex);

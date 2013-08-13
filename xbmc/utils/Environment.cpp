@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -243,7 +243,7 @@ int CEnvironment::putenv(const std::string &envstring)
 {
   if (envstring.empty())
     return 0;
-  unsigned int pos = envstring.find('=');
+  size_t pos = envstring.find('=');
   if (pos == 0) // '=' is the first character
     return -1;
   if (pos == std::string::npos)

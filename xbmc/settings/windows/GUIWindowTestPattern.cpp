@@ -1,8 +1,6 @@
 /*
  *      Copyright (C) 2005-2013 Team XBMC
- *      http://www.xbmc.org
- *
- *      Test patterns designed by Ofer LaOr - hometheater.co.il
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -89,11 +87,12 @@ void CGUIWindowTestPattern::Process(unsigned int currentTime, CDirtyRegionList &
 void CGUIWindowTestPattern::Render()
 {
   BeginRender();
+  const RESOLUTION_INFO info = g_graphicsContext.GetResInfo();
 
-  int top = CDisplaySettings::Get().GetResolutionInfo(g_graphicsContext.GetVideoResolution()).Overscan.top;
-  int bottom = CDisplaySettings::Get().GetResolutionInfo(g_graphicsContext.GetVideoResolution()).Overscan.bottom;
-  int left = CDisplaySettings::Get().GetResolutionInfo(g_graphicsContext.GetVideoResolution()).Overscan.left;
-  int right = CDisplaySettings::Get().GetResolutionInfo(g_graphicsContext.GetVideoResolution()).Overscan.right;
+  int top    = info.Overscan.top;
+  int bottom = info.Overscan.bottom;
+  int left   = info.Overscan.left;
+  int right  = info.Overscan.right;
 
   switch (m_pattern)
   {

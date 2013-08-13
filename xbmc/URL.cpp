@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2005-2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -578,10 +578,17 @@ CStdString CURL::GetWithoutUserDetails() const
 
   if (m_strHostName != "")
   {
+    CStdString strHostName;
+
     if (URIUtils::ProtocolHasParentInHostname(m_strProtocol))
-      strURL += CURL(m_strHostName).GetWithoutUserDetails();
+      strHostName = CURL(m_strHostName).GetWithoutUserDetails();
     else
-      strURL += m_strHostName;
+      strHostName = m_strHostName;
+
+    if (URIUtils::ProtocolHasEncodedHostname(m_strProtocol))
+      strURL += URLEncodeInline(strHostName);
+    else
+      strURL += strHostName;
 
     if ( HasPort() )
     {

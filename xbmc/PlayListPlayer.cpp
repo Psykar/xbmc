@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2005-2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -576,8 +576,8 @@ void CPlayListPlayer::ReShuffle(int iPlaylist, int iPosition)
   else if (iPlaylist == m_iCurrentPlayList)
   {
     if (
-      (g_application.IsPlayingAudio() && iPlaylist == PLAYLIST_MUSIC) ||
-      (g_application.IsPlayingVideo() && iPlaylist == PLAYLIST_VIDEO)
+      (g_application.m_pPlayer->IsPlayingAudio() && iPlaylist == PLAYLIST_MUSIC) ||
+      (g_application.m_pPlayer->IsPlayingVideo() && iPlaylist == PLAYLIST_VIDEO)
       )
     {
       g_playlistPlayer.GetPlaylist(iPlaylist).Shuffle(m_iCurrentSong + 2);
@@ -709,8 +709,8 @@ void CPlayListPlayer::Swap(int iPlaylist, int indexItem1, int indexItem2)
 void CPlayListPlayer::AnnouncePropertyChanged(int iPlaylist, const std::string &strProperty, const CVariant &value)
 {
   if (strProperty.empty() || value.isNull() ||
-     (iPlaylist == PLAYLIST_VIDEO && !g_application.IsPlayingVideo()) ||
-     (iPlaylist == PLAYLIST_MUSIC && !g_application.IsPlayingAudio()))
+     (iPlaylist == PLAYLIST_VIDEO && !g_application.m_pPlayer->IsPlayingVideo()) ||
+     (iPlaylist == PLAYLIST_MUSIC && !g_application.m_pPlayer->IsPlayingAudio()))
     return;
 
   CVariant data;

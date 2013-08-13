@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2005-2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -128,10 +128,9 @@ void CDVDDemuxHTSP::Flush()
 
 bool CDVDDemuxHTSP::ReadStream(uint8_t* buf, int len)
 {
-  int ret;
   while(len > 0)
   {
-    ret = m_Input->Read(buf, len);
+    int ret = m_Input->Read(buf, len);
     if(ret <= 0)
       return false;
     len -= ret;
@@ -166,10 +165,9 @@ htsmsg_t* CDVDDemuxHTSP::ReadStream()
 DemuxPacket* CDVDDemuxHTSP::Read()
 {
   htsmsg_t *  msg;
-  const char* method;
   while((msg = ReadStream()))
   {
-    method = htsmsg_get_str(msg, "method");
+    const char* method = htsmsg_get_str(msg, "method");
     if(method == NULL)
       break;
 

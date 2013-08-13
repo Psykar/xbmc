@@ -1,8 +1,7 @@
 /*
- *      Copyright (C) 2005-2013 Team XBMC
- *      http://www.xbmc.org
- *
  *      Initial code sponsored by: Voddler Inc (voddler.com)
+ *      Copyright (C) 2005-2013 Team XBMC
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,6 +18,7 @@
  *  <http://www.gnu.org/licenses/>.
  *
  */
+
 #include "system.h"
 #include "OverlayRenderer.h"
 #include "cores/dvdplayer/DVDCodecs/Overlay/DVDOverlay.h"
@@ -196,7 +196,7 @@ void CRenderer::Render(COverlay* o)
   RESOLUTION_INFO res;
   g_renderManager.GetVideoRect(rs, rd);
   rv  = g_graphicsContext.GetViewWindow();
-  res = CDisplaySettings::Get().GetResolutionInfo(g_renderManager.GetResolution());
+  res = g_graphicsContext.GetResInfo(g_renderManager.GetResolution());
 
   SRenderState state;
   state.x       = o->m_x;
@@ -262,9 +262,6 @@ void CRenderer::Render(COverlay* o)
     {
       float scale_x = rd.Width() / rs.Width();
       float scale_y = rd.Height() / rs.Height();
-
-      state.x      -= rs.x1;
-      state.y      -= rs.y1;
 
       state.x      *= scale_x;
       state.y      *= scale_y;

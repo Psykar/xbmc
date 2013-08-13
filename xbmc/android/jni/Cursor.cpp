@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -160,9 +160,9 @@ int CJNICursor::getInt(int columnIndex)
     columnIndex);
 }
 
-long CJNICursor::getLong(int columnIndex)
+int64_t CJNICursor::getLong(int columnIndex)
 {
-  return call_method<jint>(m_object,
+  return call_method<jlong>(m_object,
     "getLong", "()J",
     columnIndex);
 }

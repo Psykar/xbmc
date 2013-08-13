@@ -1,22 +1,24 @@
 /*
-* XBMC Media Center
-* Copyright (c) 2002 d7o3g4q and RUNTiME
-* Portions Copyright (c) by the authors of ffmpeg and xvid
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*/
+ *      Copyright (c) 2002 d7o3g4q and RUNTiME
+ *      Portions Copyright (c) by the authors of ffmpeg and xvid
+ *      Copyright (C) 2012-2013 Team XBMC
+ *      http://xbmc.org
+ *
+ *  This Program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  This Program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with XBMC; see the file COPYING.  If not, see
+ *  <http://www.gnu.org/licenses/>.
+ *
+ */
 
 #if (defined HAVE_CONFIG_H) && (!defined TARGET_WINDOWS)
   #include "config.h"
@@ -194,6 +196,12 @@ bool COMXAudio::PortSettingsChanged()
        CLog::Log(LOGERROR, "%s::%s - error SetParameter 1 output omx_err(0x%08x)", CLASSNAME, __func__, omx_err);
     }
     m_pcm_output.nPortIndex      = m_omx_mixer.GetOutputPort();
+
+    /* mixer output is always stereo */
+    m_pcm_output.eChannelMapping[0] = OMX_AUDIO_ChannelLF;
+    m_pcm_output.eChannelMapping[1] = OMX_AUDIO_ChannelRF;
+    m_pcm_output.nChannels = 2;
+
     omx_err = m_omx_mixer.SetParameter(OMX_IndexParamAudioPcm, &m_pcm_output);
     if(omx_err != OMX_ErrorNone)
     {
@@ -445,7 +453,7 @@ bool COMXAudio::Initialize(AEAudioFormat format, std::string& device, OMXClock *
   port_param.format.audio.eEncoding = m_eEncoding;
 
   port_param.nBufferSize = m_ChunkLen;
-  port_param.nBufferCountActual = std::max(port_param.nBufferCountMin, 6U);
+  port_param.nBufferCountActual = std::max((unsigned int)port_param.nBufferCountMin, 6U);
 
   omx_err = m_omx_decoder.SetParameter(OMX_IndexParamPortDefinition, &port_param);
   if(omx_err != OMX_ErrorNone)
@@ -465,7 +473,7 @@ bool COMXAudio::Initialize(AEAudioFormat format, std::string& device, OMXClock *
     return false;
   }
 
-  port_param.nBufferCountActual = std::max(port_param.nBufferCountMin, m_BufferLen / port_param.nBufferSize);
+  port_param.nBufferCountActual = std::max((unsigned int)port_param.nBufferCountMin, m_BufferLen / port_param.nBufferSize);
 
   omx_err = m_omx_decoder.SetParameter(OMX_IndexParamPortDefinition, &port_param);
   if(omx_err != OMX_ErrorNone)
@@ -620,6 +628,9 @@ bool COMXAudio::Deinitialize()
   m_extradata = NULL;
   m_extrasize = 0;
 
+  while(!m_vizqueue.empty())
+    m_vizqueue.pop();
+
   m_dllAvUtil.Unload();
 
   m_last_pts      = DVD_NOPTS_VALUE;
@@ -738,26 +749,8 @@ bool COMXAudio::SetCurrentVolume(float fVolume)
   return true;
 }
 
-
-//***********************************************************************************************
-unsigned int COMXAudio::AddPackets(const void* data, unsigned int len)
+void COMXAudio::VizPacket(const void* data, unsigned int len, double pts)
 {
-  return AddPackets(data, len, 0, 0);
-}
-
-//***********************************************************************************************
-unsigned int COMXAudio::AddPackets(const void* data, unsigned int len, double dts, double pts)
-{
-  CSingleLock lock (m_critSection);
-
-  if(!m_Initialized) 
-  {
-    CLog::Log(LOGERROR,"COMXAudio::AddPackets - sanity failed. no valid play handle!");
-    return len;
-  }
-
-  if (m_pCallback && len && !(m_Passthrough || m_HWDecode))
-  {
     /* input samples */
     unsigned int vizBufferSamples = len / (CAEUtil::DataFormatToBits(m_format.m_dataFormat) >> 3);
 
@@ -790,9 +783,47 @@ unsigned int COMXAudio::AddPackets(const void* data, unsigned int len, double dt
     if(vizBufferSamples > VIS_PACKET_SIZE)
       vizBufferSamples = VIS_PACKET_SIZE;
 
-    if(m_pCallback)
-      m_pCallback->OnAudioData((float *)m_vizRemapBuffer, vizBufferSamples);
+    vizblock_t v;
+    v.pts = pts;
+    v.num_samples = vizBufferSamples;
+    memcpy(v.samples, m_vizRemapBuffer, vizBufferSamples * sizeof(float));
+    m_vizqueue.push(v);
+
+    double stamp = m_av_clock->OMXMediaTime();
+    while(!m_vizqueue.empty())
+    {
+      vizblock_t &v = m_vizqueue.front();
+      /* if packet has almost reached media time (allow time for rendering delay) then display it */
+      /* we'll also consume if queue gets unexpectedly long to avoid filling memory */
+      if (v.pts == DVD_NOPTS_VALUE || v.pts - stamp < DVD_SEC_TO_TIME(1.0/30.0) || v.pts - stamp > DVD_SEC_TO_TIME(15.0))
+      {
+         m_pCallback->OnAudioData(v.samples, v.num_samples);
+         m_vizqueue.pop();
+      }
+      else break;
+   }
+}
+
+
+//***********************************************************************************************
+unsigned int COMXAudio::AddPackets(const void* data, unsigned int len)
+{
+  return AddPackets(data, len, 0, 0);
+}
+
+//***********************************************************************************************
+unsigned int COMXAudio::AddPackets(const void* data, unsigned int len, double dts, double pts)
+{
+  CSingleLock lock (m_critSection);
+
+  if(!m_Initialized)
+  {
+    CLog::Log(LOGERROR,"COMXAudio::AddPackets - sanity failed. no valid play handle!");
+    return len;
   }
+
+  if (m_pCallback && len && !(m_Passthrough || m_HWDecode))
+    VizPacket(data, len, pts);
 
   if(m_eEncoding == OMX_AUDIO_CodingDTS && m_LostSync && (m_Passthrough || m_HWDecode))
   {

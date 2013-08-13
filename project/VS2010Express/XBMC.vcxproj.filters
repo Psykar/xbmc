@@ -304,6 +304,12 @@
     <Filter Include="network\mdns">
       <UniqueIdentifier>{4deb3d70-7772-42be-8884-4a550c1ff666}</UniqueIdentifier>
     </Filter>
+    <Filter Include="interfaces\generic">
+      <UniqueIdentifier>{4286258a-45d7-45e8-9e56-ebf18fea53ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="cores\AudioEngine\Engines\ActiveAE">
+      <UniqueIdentifier>{27f2c647-7b5f-4c49-b2e7-22bf360e58ab}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\xbmc\win32\pch.cpp">
@@ -642,6 +648,9 @@
     <ClCompile Include="..\..\xbmc\cores\VideoRenderers\OverlayRendererUtil.cpp">
       <Filter>cores\VideoRenderers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\xbmc\cores\VideoRenderers\RenderFlags.cpp">
+      <Filter>cores\VideoRenderers</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\xbmc\cores\VideoRenderers\RenderManager.cpp">
       <Filter>cores\VideoRenderers</Filter>
     </ClCompile>
@@ -877,6 +886,9 @@
       <Filter>cdrip</Filter>
     </ClCompile>
     <ClCompile Include="..\..\xbmc\cdrip\Encoder.cpp">
+      <Filter>cdrip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\cdrip\EncoderFFmpeg.cpp">
       <Filter>cdrip</Filter>
     </ClCompile>
     <ClCompile Include="..\..\xbmc\cdrip\EncoderFlac.cpp">
@@ -2391,6 +2403,9 @@
     <ClCompile Include="..\..\xbmc\guilib\GUITexture.cpp">
       <Filter>guilib</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\xbmc\guilib\StereoscopicsManager.cpp">
+      <Filter>guilib</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\xbmc\guilib\Texture.cpp">
       <Filter>guilib</Filter>
     </ClCompile>
@@ -2806,9 +2821,6 @@
     <ClCompile Include="..\..\xbmc\interfaces\python\XBPython.cpp">
       <Filter>interfaces\python</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\xbmc\interfaces\python\XBPyThread.cpp">
-      <Filter>interfaces\python</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\xbmc\interfaces\python\generated\AddonModuleXbmc.cpp">
       <Filter>interfaces\python\generated</Filter>
     </ClCompile>
@@ -2993,9 +3005,6 @@
     <ClCompile Include="..\..\xbmc\settings\SettingDependency.cpp">
       <Filter>settings</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\xbmc\settings\SettingVisibility.cpp">
-      <Filter>settings</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\xbmc\network\NetworkServices.cpp">
       <Filter>network</Filter>
     </ClCompile>
@@ -3028,6 +3037,47 @@
     </ClCompile>
     <ClCompile Include="..\..\xbmc\utils\LegacyPathTranslation.cpp">
       <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\generic\LanguageInvokerThread.cpp">
+      <Filter>interfaces\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\generic\ScriptInvocationManager.cpp">
+      <Filter>interfaces\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\python\PythonInvoker.cpp">
+      <Filter>interfaces\python</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\addons\AddonCallbacksCodec.cpp">
+      <Filter>addons</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\interfaces\json-rpc\ProfilesOperations.cpp">
+      <Filter>interfaces\json-rpc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\GitRevision.cpp" />
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\ActiveAE\ActiveAE.cpp">
+      <Filter>cores\AudioEngine\Engines\ActiveAE</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\ActiveAE\ActiveAEBuffer.cpp">
+      <Filter>cores\AudioEngine\Engines\ActiveAE</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\ActiveAE\ActiveAEResample.cpp">
+      <Filter>cores\AudioEngine\Engines\ActiveAE</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\ActiveAE\ActiveAESink.cpp">
+      <Filter>cores\AudioEngine\Engines\ActiveAE</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\ActiveAE\ActiveAESound.cpp">
+      <Filter>cores\AudioEngine\Engines\ActiveAE</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\ActiveAE\ActiveAEStream.cpp">
+      <Filter>cores\AudioEngine\Engines\ActiveAE</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\utils\ActorProtocol.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\ApplicationPlayer.cpp" />
+    <ClCompile Include="..\..\xbmc\settings\SettingRequirement.cpp">
+      <Filter>settings</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -3490,6 +3540,9 @@
     <ClInclude Include="..\..\xbmc\cores\VideoRenderers\OverlayRendererUtil.h">
       <Filter>cores\VideoRenderers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\VideoRenderers\RenderFlags.h">
+      <Filter>cores\VideoRenderers</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\xbmc\cores\VideoRenderers\RenderManager.h">
       <Filter>cores\VideoRenderers</Filter>
     </ClInclude>
@@ -3755,6 +3808,9 @@
       <Filter>cdrip</Filter>
     </ClInclude>
     <ClInclude Include="..\..\xbmc\cdrip\Encoder.h">
+      <Filter>cdrip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cdrip\EncoderFFmpeg.h">
       <Filter>cdrip</Filter>
     </ClInclude>
     <ClInclude Include="..\..\xbmc\cdrip\EncoderFlac.h">
@@ -5423,6 +5479,9 @@
     <ClInclude Include="..\..\xbmc\guilib\GUITexture.h">
       <Filter>guilib</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\xbmc\guilib\StereoscopicsManager.h">
+      <Filter>guilib</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\xbmc\guilib\Texture.h">
       <Filter>guilib</Filter>
     </ClInclude>
@@ -5699,9 +5758,6 @@
     <ClInclude Include="..\..\xbmc\interfaces\python\XBPython.h">
       <Filter>interfaces\python</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\xbmc\interfaces\python\XBPyThread.h">
-      <Filter>interfaces\python</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\xbmc\music\tags\TagLibVFSStream.h">
       <Filter>music\tags</Filter>
     </ClInclude>
@@ -5895,9 +5951,6 @@
     <ClInclude Include="..\..\xbmc\settings\SettingDependency.h">
       <Filter>settings</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\xbmc\settings\SettingVisibility.h">
-      <Filter>settings</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\xbmc\network\NetworkServices.h">
       <Filter>network</Filter>
     </ClInclude>
@@ -5937,6 +5990,53 @@
     <ClInclude Include="..\..\xbmc\utils\LegacyPathTranslation.h">
       <Filter>utils</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\generic\ILanguageInvoker.h">
+      <Filter>interfaces\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\generic\LanguageInvokerThread.h">
+      <Filter>interfaces\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\generic\ScriptInvocationManager.h">
+      <Filter>interfaces\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\python\PythonInvoker.h">
+      <Filter>interfaces\python</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\generic\ILanguageInvocationHandler.h">
+      <Filter>interfaces\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\addons\AddonCallbacksCodec.h">
+      <Filter>addons</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\interfaces\json-rpc\ProfilesOperations.h">
+      <Filter>interfaces\json-rpc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\win32\PlatformInclude.h" />
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\Engines\ActiveAE\ActiveAE.h">
+      <Filter>cores\AudioEngine\Engines\ActiveAE</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\Engines\ActiveAE\ActiveAEBuffer.h">
+      <Filter>cores\AudioEngine\Engines\ActiveAE</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\Engines\ActiveAE\ActiveAEResample.h">
+      <Filter>cores\AudioEngine\Engines\ActiveAE</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\Engines\ActiveAE\ActiveAESink.h">
+      <Filter>cores\AudioEngine\Engines\ActiveAE</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\Engines\ActiveAE\ActiveAESound.h">
+      <Filter>cores\AudioEngine\Engines\ActiveAE</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\Engines\ActiveAE\ActiveAEStream.h">
+      <Filter>cores\AudioEngine\Engines\ActiveAE</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\utils\ActorProtocol.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\ApplicationPlayer.h" />
+    <ClInclude Include="..\..\xbmc\settings\SettingRequirement.h">
+      <Filter>settings</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\xbmc\win32\XBMC_PC.rc">
@@ -5944,9 +6044,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\xbmc\win32\PlatformInclude.h">
-      <Filter>win32</Filter>
-    </CustomBuild>
     <CustomBuild Include="..\..\xbmc\interfaces\swig\AddonModuleXbmcplugin.i">
       <Filter>interfaces\swig</Filter>
     </CustomBuild>
@@ -5962,6 +6059,7 @@
     <CustomBuild Include="..\..\xbmc\interfaces\swig\AddonModuleXbmc.i">
       <Filter>interfaces\swig</Filter>
     </CustomBuild>
+    <CustomBuild Include="..\..\xbmc\GitRevision.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\xbmc\interfaces\swig\ControlListAddItemMethods.i">

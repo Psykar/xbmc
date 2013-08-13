@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2005-2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -12,9 +12,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *  You should have received a copy of the GNU General Public License
+ *  along with XBMC; see the file COPYING.  If not, see
+ *  <http://www.gnu.org/licenses/>.
  *
  */
 #include "system.h"
@@ -266,6 +266,13 @@ bool CDecoder::Open(AVCodecContext *avctx, enum PixelFormat fmt, unsigned int su
 
   CLog::Log(LOGDEBUG, "VAAPI - attempting to open codec %d with profile %d at level %d with %d reference frames", avctx->codec_id, avctx->profile, avctx->level, avctx->refs);
 
+  if(avctx->width  > 1920
+  || avctx->height > 1088)
+  {
+    CLog::Log(LOGDEBUG, "VAAPI - frame size (%dx%d) too large - disallowing", avctx->width, avctx->height);
+    return false;
+  }
+
   vector<VAProfile> accepted;
   switch (avctx->codec_id) {
     case AV_CODEC_ID_MPEG2VIDEO:
@@ -395,6 +402,12 @@ bool CDecoder::EnsureContext(AVCodecContext *avctx)
 bool CDecoder::EnsureSurfaces(AVCodecContext *avctx, unsigned n_surfaces_count)
 {
   CLog::Log(LOGDEBUG, "VAAPI - making sure %d surfaces are allocated for given %d references", n_surfaces_count, avctx->refs);
+
+  if(n_surfaces_count > m_surfaces_max)
+  {
+    CLog::Log(LOGERROR, "VAAPI - Failed to ensure surfaces! Requested %d surfaces. Maximum possible count is %d!", n_surfaces_count, m_surfaces_max);
+    return false;
+  }
 
   if(n_surfaces_count <= m_surfaces_count)
     return true;

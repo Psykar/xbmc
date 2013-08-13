@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2005-2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -286,7 +286,7 @@ void CGUIDialogContentSettings::FillContentTypes(const CONTENT_TYPE &content)
     bool isDefault = ((*it)->ID() == defaultID);
     map<CONTENT_TYPE,VECADDONS>::iterator iter=m_scrapers.find(content);
 
-    AddonPtr scraper = (*it)->Clone((*it));
+    AddonPtr scraper = (*it)->Clone();
 
     if (m_scraper && m_scraper->ID() == (*it)->ID())
     { // don't overwrite preconfigured scraper

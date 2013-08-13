@@ -1,7 +1,7 @@
 #pragma once
 /*
  *      Copyright (C) 2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,15 +29,15 @@ public:
   CJNIIntent(const jni::jhobject &intent) : CJNIBase(intent) {};
   ~CJNIIntent() {};
 
-  std::string getAction();
-  std::string getDataString();
-  std::string getPackage();
-  std::string getType();
+  std::string getAction() const;
+  std::string getDataString() const ;
+  std::string getPackage() const;
+  std::string getType() const ;
 
-  int  getIntExtra(const std::string &name, int defaultValue);
+  int getIntExtra(const std::string &name, int defaultValue) const;
 
-  bool hasExtra(const std::string &name);
-  bool hasCategory(const std::string &category);
+  bool hasExtra(const std::string &name) const;
+  bool hasCategory(const std::string &category) const;
 
   void addFlags(int flags);
   void addCategory(const std::string &category);

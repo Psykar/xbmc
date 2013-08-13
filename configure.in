@@ -2,10 +2,11 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([xbmc], [12.9.6], [http://trac.xbmc.org])
+AC_INIT([xbmc], [12.9.7], [http://trac.xbmc.org])
 AC_CONFIG_HEADERS([xbmc/config.h])
 AH_TOP([#pragma once])
 m4_include([m4/ax_python_devel.m4])
+m4_include([m4/xbmc_arch.m4])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([foreign])
@@ -59,7 +60,7 @@ AC_DEFUN([XB_FIND_SONAME],
     $1_FILENAME=$($CC -nostdlib -o /dev/null $LDFLAGS -l$2 -Wl,-M 2>/dev/null | grep "^LOAD.*$2" | awk '{V=2; print $V}')
     if [[ -z $$1_FILENAME ]]; then
       #try gold linker syntax
-      $1_FILENAME=$($CC -nostdlib -o /dev/null $LDFLAGS -l$2 -Wl,-t 3>&1 1>&2 2>&3 | grep "$2")
+      $1_FILENAME=$($CC -nostdlib -o /dev/null $LDFLAGS -l$2 -Wl,-t 3>&1 1>&2 2>&3 | grep "lib$2")
     fi
     if [[ ! -z $$1_FILENAME ]]; then
       $1_SONAME=$($OBJDUMP -p $$1_FILENAME | grep "SONAME.*$2" | awk '{V=2; print $V}')
@@ -530,7 +531,7 @@ AC_ARG_ENABLE([gtest],
 
 AC_ARG_ENABLE([codec],
   [AS_HELP_STRING([--enable-codec],
-  [enable additional codecs from a list of comma separated names, (default is none, choices are amcodec)])],
+  [enable additional codecs from a list of comma separated names, (default is none, choices are amcodec, libstagefright)])],
   [add_codecs=$enableval],
   [add_codecs=no])
 
@@ -546,6 +547,13 @@ AC_ARG_ENABLE([external-ffmpeg],
   [enable use of external ffmpeg libraries (default is no) 'Linux only'])],
   [use_external_ffmpeg=$enableval],
   [use_external_ffmpeg=$use_external_libraries])
+
+AC_ARG_ENABLE([libav-compat],
+  [AS_HELP_STRING([--enable-libav-compat],
+  [build a wrapper around libav to provide the functions needed by XBMC. This is
+   *not* supported by XBMC developers and is provided only for convenience. (default is no) 'Linux only'])],
+  [use_libav_hacks=$enableval],
+  [use_libav_hacks=no])
 
 ### End of external library options
 
@@ -587,21 +595,17 @@ case $host in
      ;;
   i*86*-linux-gnu*)
      ARCH="i486-linux"
-     AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_LINUX -D_LINUX")
      ;;
   x86_64-*-linux-gnu*)
      ARCH="x86_64-linux"
-     AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_LINUX -D_LINUX")
      ;;
   i386-*-freebsd*)
      ARCH="x86-freebsd"
      MAKE="gmake"
-     AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_FREEBSD -D_LINUX")
      ;;
   amd64-*-freebsd*)
      ARCH="x86_64-freebsd"
      MAKE="gmake"
-     AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_FREEBSD -D_LINUX")
      ;;
   arm-apple-darwin*)
      use_joystick=no
@@ -621,14 +625,12 @@ case $host in
      PYTHON_CPPFLAGS="-I${prefix}/include/python2.6"
      PYTHON_SITE_PKG="${prefix}/lib/python2.6/site-packages"
      PYTHON_NOVERSIONCHECK="no-check"
-     AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_DARWIN -DTARGET_DARWIN_IOS -D_LINUX")
      ;;
   *86*-apple-darwin*)
      use_joystick=no
      use_vtbdecoder=no
      use_texturepacker_native=yes
      ARCH="x86-osx"
-     AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_DARWIN -DTARGET_DARWIN_OSX -D_LINUX")
      ;;
   powerpc-apple-darwin*)
      use_joystick=no
@@ -636,21 +638,17 @@ case $host in
      use_crystalhd=no
      ARCH="powerpc-osx"
      use_arch="ppc"
-     AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_DARWIN -DTARGET_DARWIN_OSX -D_LINUX")
      ;;
   powerpc-*-linux-gnu*)
      ARCH="powerpc-linux"
-     AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_LINUX -D_LINUX -D_POWERPC")
      ;;
   powerpc64-*-linux-gnu*)
      ARCH="powerpc64-linux"
-     AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_LINUX -D_LINUX -D_POWERPC64")
      ;;
   arm*-*-linux-gnu*)
      use_texturepacker=no
      ARCH="arm"
      use_arch="arm"
-     AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_LINUX -D_LINUX")
      ffmpeg_target_os=linux
      use_joystick=no
      use_neon=yes
@@ -677,7 +675,6 @@ case $host in
 esac
 AC_SUBST([ARCH])
 
-
 check_sdl_arch=[`file $USE_TEXTUREPACKER_NATIVE_ROOT/lib/libSDL_image.dylib | awk '{print $NF}'`]
 if test "x$check_sdl_arch" = "xi386" ; then
   DARWIN_NATIVE_ARCH=-m32
@@ -690,7 +687,6 @@ if test "$target_platform" = "target_android" ; then
   USE_ANDROID=1
   use_texturepacker_native=yes
   webserver_checkdepends=yes
-  AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_LINUX -D_LINUX -DTARGET_ANDROID")
   CFLAGS="$CFLAGS -Wno-psabi"
   CXXFLAGS="$CXXFLAGS -Wno-psabi"
   AC_DEFINE(HAS_EGLGLES, [1], [Define if supporting EGL based GLES Framebuffer])
@@ -707,7 +703,6 @@ case $use_platform in
      use_hardcoded_tables="yes"
      use_alsa="no"
      ARCH="arm"
-     AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_LINUX -D_LINUX -D_ARMEL -DTARGET_RASPBERRY_PI")
      AC_DEFINE(HAS_EGLGLES, [1], [Define if supporting EGL based GLES Framebuffer])
      USE_OMXLIB=1; AC_DEFINE([HAVE_OMXLIB],[1],["Define to 1 if OMX libs is enabled"])
      CFLAGS="$CFLAGS"
@@ -715,6 +710,8 @@ case $use_platform in
      ffmpeg_target_os=linux
      ;;
 esac
+
+XBMC_SETUP_ARCH_DEFINES()
 
 # check for GIT_REV
 AC_CHECK_PROG(HAVE_GIT,git,"yes","no",)
@@ -1617,16 +1614,18 @@ fi
 
 ### External libraries checks
 
+# Hacks for supporting libav
+
+USE_LIBAV_HACKS=0
+if test "$use_libav_hacks" = "yes"; then
+    export PKG_CONFIG_PATH="${srcdir}/lib/xbmc-libav-hacks/pkgconfig/:$PKG_CONFIG_PATH"
+    USE_LIBAV_HACKS=1
+    AC_DEFINE([USE_LIBAV_HACKS], [1], [Whether to use libav compatibility hacks.])
+fi
+
 # External FFmpeg
 if test "$use_external_ffmpeg" = "yes"; then
-  FFMPEG_LIBNAMES="libavcodec libavfilter libavformat libavutil libpostproc libswscale"
-
-  # one of libswresample or libavresample is needed
-  PKG_CHECK_EXISTS([libswresample], FFMPEG_LIBNAMES="$FFMPEG_LIBNAMES libswresample",
-                   [PKG_CHECK_EXISTS([libavresample],
-                                     FFMPEG_LIBNAMES="$FFMPEG_LIBNAMES libavresample",
-                                     AC_MSG_ERROR([You need either libswresample
-                                                   or libavresample.]))])
+  FFMPEG_LIBNAMES="libavcodec libavfilter libavformat libavutil libpostproc libswscale libswresample"
 
   PKG_CHECK_MODULES([FFMPEG], [$FFMPEG_LIBNAMES],
                     [INCLUDES="$INCLUDES $FFMPEG_CFLAGS"; LIBS="$LIBS $FFMPEG_LIBS"],
@@ -1638,9 +1637,6 @@ if test "$use_external_ffmpeg" = "yes"; then
 
   AC_CHECK_HEADERS([libavcodec/avcodec.h libavfilter/avfilter.h libavformat/avformat.h libavutil/avutil.h libpostproc/postprocess.h libswscale/swscale.h],,
   [AC_MSG_ERROR($missing_headers)])
-
-  # Check for libswresample or libavresample headers.
-  AC_CHECK_HEADERS([libswresample/swresample.h libavresample/avresample.h])
 
   AC_MSG_NOTICE($external_ffmpeg_enabled)
   USE_EXTERNAL_FFMPEG=1
@@ -1845,6 +1841,11 @@ case $add_codecs in
       AC_CHECK_HEADER([amlplayer/codec_error.h],, AC_MSG_ERROR($missing_headers))
       XB_ADD_CODEC([LIBAMCODEC], [amcodec])
       ;;
+  *libstagefright*)
+      LIBS+="-L${prefix}/opt/android-libs -lstdc++ -lutils -lcutils -lstagefright -lbinder -lui -lgui"
+      XB_ADD_CODEC([LIBSTAGEFRIGHT], [libstagefright])
+      ;;
+  *)
 esac
 
 # platform specific bin utilities
@@ -2384,6 +2385,7 @@ OUTPUT_FILES="Makefile \
     xbmc/visualizations/fishBMC/Makefile \
     xbmc/visualizations/WaveForm/Makefile \
     lib/addons/library.xbmc.addon/Makefile \
+    lib/addons/library.xbmc.codec/Makefile \
     lib/addons/library.xbmc.gui/Makefile \
     lib/addons/library.xbmc.pvr/Makefile \
     xbmc/visualizations/EGLHelpers/Makefile \
@@ -2397,7 +2399,8 @@ OUTPUT_FILES="Makefile \
     xbmc/android/loader/Makefile \
     xbmc/android/jni/Makefile \
     xbmc/utils/Makefile \
-    xbmc/main/Makefile"
+    xbmc/main/Makefile \
+    project/cmake/xbmc-config.cmake"
 
 if test "$use_skin_touched" = "yes"; then
 OUTPUT_FILES="$OUTPUT_FILES addons/skin.touched/media/Makefile"
@@ -2426,6 +2429,7 @@ AC_SUBST(DISABLE_FISHBMC)
 AC_SUBST(DISABLE_PROJECTM)
 AC_SUBST(USE_SKIN_TOUCHED)
 AC_SUBST(USE_EXTERNAL_FFMPEG)
+AC_SUBST(USE_LIBAV_HACKS)
 AC_SUBST(PYTHON_VERSION)
 AC_SUBST(OUTPUT_FILES)
 AC_SUBST(HAVE_XBMC_NONFREE)
@@ -2562,8 +2566,8 @@ XB_CONFIG_MODULE([lib/ffmpeg], [
     ffmpg_config="$ffmpg_config --enable-gpl"
     ffmpg_config="$ffmpg_config --enable-postproc"
     ffmpg_config="$ffmpg_config --enable-static      --enable-pthreads"
-    ffmpg_config="$ffmpg_config --enable-muxer=spdif --enable-muxer=adts"
-    ffmpg_config="$ffmpg_config --enable-encoder=ac3 --enable-encoder=aac"
+    ffmpg_config="$ffmpg_config --enable-muxer=spdif --enable-muxer=adts --enable-muxer=asf --enable-muxer=ipod"
+    ffmpg_config="$ffmpg_config --enable-encoder=ac3 --enable-encoder=aac --enable-encoder=wmav2"
     ffmpg_config="$ffmpg_config --enable-protocol=http"
     ffmpg_config="$ffmpg_config --enable-runtime-cpudetect"
 
@@ -2609,9 +2613,12 @@ XB_CONFIG_MODULE([lib/ffmpeg], [
       --disable-muxers \
       --enable-muxer=spdif \
       --enable-muxer=adts \
+      --enable-muxer=asf \
+      --enable-muxer=ipod \
       --disable-encoders \
       --enable-encoder=ac3 \
       --enable-encoder=aac \
+      --enable-encoder=wmav2 \
       `if test "$use_ffmpeg_libvorbis" = "yes"; then echo --enable-libvorbis --enable-muxer=ogg --enable-encoder=libvorbis; else echo --disable-libvorbis; fi` \
       --disable-decoder=mpeg_xvmc \
       --disable-devices \
@@ -2777,15 +2784,11 @@ XB_CONFIG_MODULE([lib/gtest], [
 ], [$SKIP_CONFIG_GTEST])
 
 XB_CONFIG_MODULE([pvr-addons], [
-   if test "$USE_EXTERNAL_FFMPEG" = 1; then
-      PVR_EXT_FFMPEG="--enable-external-ffmpeg"
-   fi
   ./configure \
     --prefix="${prefix}" \
     --host=$host_alias \
     --build=$build_alias \
     --target=$target_alias \
-    $PVR_EXT_FFMPEG \
     CC="$CC" \
     CXX="$CXX" \
     CFLAGS="$CFLAGS" \

@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -135,7 +135,7 @@ SettingList CSettingGroup::GetSettings(SettingLevel level) const
 
   for (SettingList::const_iterator it = m_settings.begin(); it != m_settings.end(); ++it)
   {
-    if ((*it)->GetLevel() <= level && (*it)->IsVisible())
+    if ((*it)->GetLevel() <= level && (*it)->MeetsRequirements())
       settings.push_back(*it);
   }
 
@@ -221,7 +221,7 @@ SettingGroupList CSettingCategory::GetGroups(SettingLevel level) const
 
   for (SettingGroupList::const_iterator it = m_groups.begin(); it != m_groups.end(); ++it)
   {
-    if ((*it)->IsVisible() && (*it)->GetSettings(level).size() > 0)
+    if ((*it)->MeetsRequirements() && (*it)->GetSettings(level).size() > 0)
       groups.push_back(*it);
   }
 
@@ -307,7 +307,7 @@ SettingCategoryList CSettingSection::GetCategories(SettingLevel level) const
 
   for (SettingCategoryList::const_iterator it = m_categories.begin(); it != m_categories.end(); ++it)
   {
-    if ((*it)->IsVisible() && (*it)->GetGroups(level).size() > 0)
+    if ((*it)->MeetsRequirements() && (*it)->GetGroups(level).size() > 0)
       categories.push_back(*it);
   }
 

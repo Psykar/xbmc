@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2005-2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -215,10 +215,10 @@ BLURAY_TITLE_INFO* CDVDInputStreamBluray::GetTitleLongest()
 {
   int titles = m_dll->bd_get_titles(m_bd, TITLES_RELEVANT, 0);
 
-  BLURAY_TITLE_INFO *t, *s = NULL;
+  BLURAY_TITLE_INFO *s = NULL;
   for(int i=0; i < titles; i++)
   {
-    t = m_dll->bd_get_title_info(m_bd, i, 0);
+    BLURAY_TITLE_INFO *t = m_dll->bd_get_title_info(m_bd, i, 0);
     if(!t)
     {
       CLog::Log(LOGDEBUG, "get_main_title - unable to get title %d", i);
@@ -418,6 +418,7 @@ bool CDVDInputStreamBluray::Open(const char* strFile, const std::string& content
       CLog::Log(LOGERROR, "CDVDInputStreamBluray::Open - failed to select title %d", m_title->idx);
       return false;
     }
+    m_clip = 0;
   }
 
   return true;
