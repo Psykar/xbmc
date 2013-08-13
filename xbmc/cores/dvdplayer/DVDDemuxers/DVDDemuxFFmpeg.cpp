@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2005-2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -697,7 +697,7 @@ DemuxPacket* CDVDDemuxFFmpeg::Read()
     // check size and stream index for being in a valid range
     else if (m_pkt.pkt.size < 0 ||
              m_pkt.pkt.stream_index < 0 ||
-             m_pkt.pkt.stream_index >= m_pFormatContext->nb_streams)
+             m_pkt.pkt.stream_index >= (int)m_pFormatContext->nb_streams)
     {
       // XXX, in some cases ffmpeg returns a negative packet size
       if(m_pFormatContext->pb && !m_pFormatContext->pb->eof_reached)
@@ -1093,16 +1093,22 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int iId)
         if (m_bAVI && pStream->codec->codec_id == AV_CODEC_ID_H264)
           st->bPTSInvalid = true;
 
+#if defined(AVFORMAT_HAS_STREAM_GET_R_FRAME_RATE)
+        AVRational r_frame_rate = m_dllAvFormat.av_stream_get_r_frame_rate(pStream);
+#else
+        AVRational r_frame_rate = pStream->r_frame_rate;
+#endif
+
         //average fps is more accurate for mkv files
         if (m_bMatroska && pStream->avg_frame_rate.den && pStream->avg_frame_rate.num)
         {
           st->iFpsRate = pStream->avg_frame_rate.num;
           st->iFpsScale = pStream->avg_frame_rate.den;
         }
-        else if(pStream->r_frame_rate.den && pStream->r_frame_rate.num)
+        else if(r_frame_rate.den && r_frame_rate.num)
         {
-          st->iFpsRate = pStream->r_frame_rate.num;
-          st->iFpsScale = pStream->r_frame_rate.den;
+          st->iFpsRate = r_frame_rate.num;
+          st->iFpsScale = r_frame_rate.den;
         }
         else
         {
@@ -1111,10 +1117,10 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int iId)
         }
 
         // added for aml hw decoder, mkv frame-rate can be wrong.
-        if (pStream->r_frame_rate.den && pStream->r_frame_rate.num)
+        if (r_frame_rate.den && r_frame_rate.num)
         {
-          st->irFpsRate = pStream->r_frame_rate.num;
-          st->irFpsScale = pStream->r_frame_rate.den;
+          st->irFpsRate = r_frame_rate.num;
+          st->irFpsScale = r_frame_rate.den;
         }
         else
         {
@@ -1140,6 +1146,11 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int iId)
         AVDictionaryEntry *rtag = m_dllAvUtil.av_dict_get(pStream->metadata, "rotate", NULL, 0);
         if (rtag) 
           st->iOrientation = atoi(rtag->value);
+
+        rtag = m_dllAvUtil.av_dict_get(pStream->metadata, "stereo_mode", NULL, 0);
+        if (rtag && rtag->value)
+          st->stereo_mode = rtag->value;
+
         
         if ( m_pInput->IsStreamType(DVDSTREAM_TYPE_DVD) )
         {
@@ -1186,9 +1197,7 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int iId)
     case AVMEDIA_TYPE_ATTACHMENT:
       { //mkv attachments. Only bothering with fonts for now.
         if(pStream->codec->codec_id == AV_CODEC_ID_TTF
-#if (!defined USE_EXTERNAL_FFMPEG)
           || pStream->codec->codec_id == AV_CODEC_ID_OTF
-#endif
           )
         {
           std::string fileName = "special://temp/fonts/";

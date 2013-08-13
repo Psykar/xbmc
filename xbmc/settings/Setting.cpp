@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -75,9 +75,11 @@ bool CSetting::Deserialize(const TiXmlNode *node, bool update /* = false */)
 
   // get the attributes label and help
   int tmp = -1;
-  if (element->QueryIntAttribute(XML_ATTR_LABEL, &m_label) == TIXML_SUCCESS && tmp > 0)
+  if (element->QueryIntAttribute(XML_ATTR_LABEL, &tmp) == TIXML_SUCCESS && tmp > 0)
     m_label = tmp;
-  if (element->QueryIntAttribute(XML_ATTR_HELP, &m_help) == TIXML_SUCCESS && tmp > 0)
+  
+  tmp = -1;
+  if (element->QueryIntAttribute(XML_ATTR_HELP, &tmp) == TIXML_SUCCESS && tmp > 0)
     m_help = tmp;
   const char *parentSetting = element->Attribute("parent");
   if (parentSetting != NULL)
@@ -165,6 +167,27 @@ bool CSetting::IsEnabled() const
   return enabled;
 }
 
+bool CSetting::IsVisible() const
+{
+  if (!ISetting::IsVisible())
+    return false;
+
+  bool visible = true;
+  for (SettingDependencies::const_iterator depIt = m_dependencies.begin(); depIt != m_dependencies.end(); ++depIt)
+  {
+    if (depIt->GetType() != SettingDependencyTypeVisible)
+      continue;
+
+    if (!depIt->Check())
+    {
+      visible = false;
+      break;
+    }
+  }
+
+  return visible;
+}
+
 bool CSetting::OnSettingChanging(const CSetting *setting)
 {
   if (m_callback == NULL)
@@ -208,6 +231,7 @@ void CSetting::OnSettingPropertyChanged(const CSetting *setting, const char *pro
 void CSetting::Copy(const CSetting &setting)
 {
   SetVisible(setting.IsVisible());
+  SetRequirementsMet(setting.MeetsRequirements());
   m_callback = setting.m_callback;
   m_label = setting.m_label;
   m_help = setting.m_help;
@@ -903,7 +927,7 @@ bool CSettingString::Deserialize(const TiXmlNode *node, bool update /* = false *
 
   // get the default value
   CStdString value;
-  if (XMLUtils::GetString(node, XML_ELM_DEFAULT, value))
+  if (XMLUtils::GetString(node, XML_ELM_DEFAULT, value) && !value.empty())
     m_value = m_default = value;
   else if (!update && !m_allowEmpty)
   {

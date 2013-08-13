@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2005-2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -446,6 +446,15 @@ static bool CheckCompatibility(AVCodecContext *avctx)
     CLog::Log(LOGWARNING,"DXVA - width %i is not supported with nVidia VP3 hardware. DXVA will not be used", avctx->coded_width);
     return false;
   }
+
+  // DXVA has this as a max resolution
+  if(avctx->width  > 1920
+  || avctx->height > 1088)
+  {
+    CLog::Log(LOGDEBUG, "DXVA - frame size (%dx%d) too large - disallowing", avctx->width, avctx->height);
+    return false;
+  }
+
 
   // Check for hardware limited to H264 L4.1 (ie Bluray).
 
@@ -1383,12 +1392,11 @@ REFERENCE_TIME CProcessor::Add(DVDVideoPicture* picture)
         return 0;
 
       // Convert to NV12 - Chroma
-      uint8_t *s_u, *s_v, *d_uv;
       for (unsigned y = 0; y < picture->iHeight/2; y++)
       {
-        s_u = picture->data[1] + (y * picture->iLineSize[1]);
-        s_v = picture->data[2] + (y * picture->iLineSize[2]);
-        d_uv = ((uint8_t*)(rectangle.pBits)) + (desc.Height + y) * rectangle.Pitch;
+        uint8_t *s_u = picture->data[1] + (y * picture->iLineSize[1]);
+        uint8_t *s_v = picture->data[2] + (y * picture->iLineSize[2]);
+        uint8_t *d_uv = ((uint8_t*)(rectangle.pBits)) + (desc.Height + y) * rectangle.Pitch;
         for (unsigned x = 0; x < picture->iWidth/2; x++)
         {
           *d_uv++ = *s_u++;

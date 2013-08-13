@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2005-2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -258,6 +258,7 @@ bool URIUtils::ProtocolHasParentInHostname(const CStdString& prot)
 {
   return prot.Equals("zip")
       || prot.Equals("rar")
+      || prot.Equals("apk")
       || prot.Equals("bluray")
       || prot.Equals("udf");
 }
@@ -432,7 +433,7 @@ bool URIUtils::IsRemote(const CStdString& strFile)
   }
 
   CURL url(strFile);
-  if(IsInArchive(strFile))
+  if(ProtocolHasParentInHostname(url.GetProtocol()))
     return IsRemote(url.GetHostName());
 
   if (!url.IsLocal())
@@ -445,7 +446,7 @@ bool URIUtils::IsOnDVD(const CStdString& strFile)
 {
 #ifdef TARGET_WINDOWS
   if (strFile.Mid(1,1) == ":")
-    return (GetDriveType(strFile.Left(2)) == DRIVE_CDROM);
+    return (GetDriveType(strFile.Left(3)) == DRIVE_CDROM);
 #endif
 
   if (strFile.Left(4).CompareNoCase("dvd:") == 0)
@@ -487,7 +488,7 @@ bool URIUtils::IsOnLAN(const CStdString& strPath)
     return true;
 
   CURL url(strPath);
-  if (url.GetProtocol() == "rar" || url.GetProtocol() == "zip")
+  if (ProtocolHasParentInHostname(url.GetProtocol()))
     return IsOnLAN(url.GetHostName());
 
   if(!IsRemote(strPath))
@@ -538,7 +539,7 @@ bool URIUtils::IsHD(const CStdString& strFileName)
   if(IsStack(strFileName))
     return IsHD(CStackDirectory::GetFirstStackedFile(strFileName));
 
-  if (IsInArchive(strFileName))
+  if (ProtocolHasParentInHostname(url.GetProtocol()))
     return IsHD(url.GetHostName());
 
   return url.GetProtocol().IsEmpty() || url.GetProtocol() == "file";
@@ -851,6 +852,12 @@ bool URIUtils::IsBluray(const CStdString& strFile)
 bool URIUtils::IsAndroidApp(const CStdString &path)
 {
   return path.Left(11).Equals("androidapp:");
+}
+
+bool URIUtils::IsLibraryFolder(const CStdString& strFile)
+{
+  CURL url(strFile);
+  return url.GetProtocol().Equals("library");
 }
 
 bool URIUtils::IsDOSPath(const CStdString &path)

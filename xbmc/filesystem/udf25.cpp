@@ -2,6 +2,9 @@
  *      Copyright (C) 2010 Team Boxee
  *      http://www.boxee.tv
  *
+ *      Copyright (C) 2010-2013 Team XBMC
+ *      http://xbmc.org
+ *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2, or (at your option)
@@ -16,11 +19,10 @@
  *  along with XBMC; see the file COPYING.  If not, see
  *  <http://www.gnu.org/licenses/>.
  *
+ *  Note: parts of this code comes from libdvdread.
+ *  Jorgen Lundman and team boxee did the necessary modifications to support udf 2.5
  *
- * Note: parts of this code comes from libdvdread.
- * Jorgen Lundman and team boxee did the necessary modifications to support udf 2.5
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -605,7 +607,7 @@ int udf25::DVDReadLBUDF( uint32_t lb_number, size_t block_count, unsigned char *
 {
   int ret;
   size_t  len = block_count * DVD_VIDEO_LB_LEN;
-  int64_t pos = lb_number   * DVD_VIDEO_LB_LEN;
+  int64_t pos = lb_number   * (int64_t)DVD_VIDEO_LB_LEN;
 
   ret = ReadAt(pos, len, data);
   if(ret < 0)

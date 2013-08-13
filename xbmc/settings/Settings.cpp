@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2005-2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@
 #include "guilib/GUIAudioManager.h"
 #include "guilib/GUIFontManager.h"
 #include "guilib/LocalizeStrings.h"
+#include "guilib/StereoscopicsManager.h"
 #include "input/MouseStat.h"
 #if defined(TARGET_WINDOWS)
 #include "input/windows/WINJoystick.h"
@@ -99,6 +100,9 @@ bool AddonHasSettings(const std::string &condition, const std::string &value, co
   ADDON::AddonPtr addon;
   if (!ADDON::CAddonMgr::Get().GetAddon(setting->GetValue(), addon, setting->GetAddonType()) || addon == NULL)
     return false;
+
+  if (addon->Type() == ADDON::ADDON_SKIN)
+    return ((ADDON::CSkinInfo*)addon.get())->HasSkinFile("SkinSettings.xml");
 
   return addon->HasSettings();
 }
@@ -185,7 +189,16 @@ bool ProfileHasProgramsLocked(const std::string &condition, const std::string &v
 
 bool ProfileHasSettingsLocked(const std::string &condition, const std::string &value, const std::string &settingId)
 {
-  return CProfilesManager::Get().GetCurrentProfile().settingsLocked();
+  LOCK_LEVEL::SETTINGS_LOCK slValue=LOCK_LEVEL::ALL;
+  if (StringUtils::EqualsNoCase(value, "none"))
+    slValue = LOCK_LEVEL::NONE;
+  else if (StringUtils::EqualsNoCase(value, "standard"))
+    slValue = LOCK_LEVEL::STANDARD;
+  else if (StringUtils::EqualsNoCase(value, "advanced"))
+    slValue = LOCK_LEVEL::ADVANCED;
+  else if (StringUtils::EqualsNoCase(value, "expert"))
+    slValue = LOCK_LEVEL::EXPERT;
+  return slValue <= CProfilesManager::Get().GetCurrentProfile().settingsLockLevel();
 }
 
 bool ProfileHasVideosLocked(const std::string &condition, const std::string &value, const std::string &settingId)
@@ -304,9 +317,8 @@ bool CSettings::Load(const TiXmlElement *root, bool hide /* = false */)
   {
     for(std::map<std::string, CSetting*>::const_iterator setting = loadedSettings->begin(); setting != loadedSettings->end(); ++setting)
       setting->second->SetVisible(false);
-
-    delete loadedSettings;
   }
+  delete loadedSettings;
 
   return success;
 }
@@ -350,6 +362,7 @@ void CSettings::Uninitialize()
   // unregister setting option fillers
   m_settingsManager->UnregisterSettingOptionsFiller("audiocdactions");
   m_settingsManager->UnregisterSettingOptionsFiller("audiocdencoders");
+  m_settingsManager->UnregisterSettingOptionsFiller("aequalitylevels");
   m_settingsManager->UnregisterSettingOptionsFiller("audiodevices");
   m_settingsManager->UnregisterSettingOptionsFiller("audiodevicespassthrough");
   m_settingsManager->UnregisterSettingOptionsFiller("audiooutputmodes");
@@ -365,6 +378,8 @@ void CSettings::Uninitialize()
   m_settingsManager->UnregisterSettingOptionsFiller("rendermethods");
   m_settingsManager->UnregisterSettingOptionsFiller("resolutions");
   m_settingsManager->UnregisterSettingOptionsFiller("screens");
+  m_settingsManager->UnregisterSettingOptionsFiller("stereoscopicmodes");
+  m_settingsManager->UnregisterSettingOptionsFiller("preferedstereoscopicviewmodes");
   m_settingsManager->UnregisterSettingOptionsFiller("shutdownstates");
   m_settingsManager->UnregisterSettingOptionsFiller("startupwindows");
   m_settingsManager->UnregisterSettingOptionsFiller("streamlanguages");
@@ -382,6 +397,7 @@ void CSettings::Uninitialize()
   m_settingsManager->UnregisterCallback(&g_advancedSettings);
   m_settingsManager->UnregisterCallback(&CMediaSettings::Get());
   m_settingsManager->UnregisterCallback(&CDisplaySettings::Get());
+  m_settingsManager->UnregisterCallback(&CStereoscopicsManager::Get());
   m_settingsManager->UnregisterCallback(&g_application);
   m_settingsManager->UnregisterCallback(&g_audioManager);
   m_settingsManager->UnregisterCallback(&g_charsetConverter);
@@ -588,8 +604,8 @@ void CSettings::InitializeVisibility()
 
   if (!g_sysinfo.IsAppleTV2() || GetIOSVersion() >= 4.3)
   {
-    timezonecountry->SetVisible(false);
-    timezone->SetVisible(false);
+    timezonecountry->SetRequirementsMet(false);
+    timezone->SetRequirementsMet(false);
   }
 #endif
 }
@@ -633,7 +649,7 @@ void CSettings::InitializeDefaults()
   ((CSettingString*)m_settingsManager->GetSetting("audiooutput.audiodevice"))->SetDefault(defaultAudioDeviceName);
   ((CSettingString*)m_settingsManager->GetSetting("audiooutput.passthroughdevice"))->SetDefault(defaultAudioDeviceName);
   #endif
-#else
+#elif !defined(TARGET_WINDOWS)
   ((CSettingString*)m_settingsManager->GetSetting("audiooutput.audiodevice"))->SetDefault(CAEFactory::GetDefaultDevice(false));
   ((CSettingString*)m_settingsManager->GetSetting("audiooutput.passthroughdevice"))->SetDefault(CAEFactory::GetDefaultDevice(true));
 #endif
@@ -654,6 +670,7 @@ void CSettings::InitializeOptionFillers()
   m_settingsManager->RegisterSettingOptionsFiller("audiocdactions", MEDIA_DETECT::CAutorun::SettingOptionAudioCdActionsFiller);
   m_settingsManager->RegisterSettingOptionsFiller("audiocdencoders", MEDIA_DETECT::CAutorun::SettingOptionAudioCdEncodersFiller);
 #endif
+  m_settingsManager->RegisterSettingOptionsFiller("aequalitylevels", CAEFactory::SettingOptionsAudioQualityLevelsFiller);
   m_settingsManager->RegisterSettingOptionsFiller("audiodevices", CAEFactory::SettingOptionsAudioDevicesFiller);
   m_settingsManager->RegisterSettingOptionsFiller("audiodevicespassthrough", CAEFactory::SettingOptionsAudioDevicesPassthroughFiller);
   m_settingsManager->RegisterSettingOptionsFiller("audiooutputmodes", CAEFactory::SettingOptionsAudioOutputModesFiller);
@@ -668,6 +685,8 @@ void CSettings::InitializeOptionFillers()
   m_settingsManager->RegisterSettingOptionsFiller("rendermethods", CBaseRenderer::SettingOptionsRenderMethodsFiller);
   m_settingsManager->RegisterSettingOptionsFiller("resolutions", CDisplaySettings::SettingOptionsResolutionsFiller);
   m_settingsManager->RegisterSettingOptionsFiller("screens", CDisplaySettings::SettingOptionsScreensFiller);
+  m_settingsManager->RegisterSettingOptionsFiller("stereoscopicmodes", CDisplaySettings::SettingOptionsStereoscopicModesFiller);
+  m_settingsManager->RegisterSettingOptionsFiller("preferedstereoscopicviewmodes", CDisplaySettings::SettingOptionsPreferredStereoscopicViewModesFiller);
   m_settingsManager->RegisterSettingOptionsFiller("shutdownstates", CPowerManager::SettingOptionsShutdownStatesFiller);
   m_settingsManager->RegisterSettingOptionsFiller("startupwindows", ADDON::CSkinInfo::SettingOptionsStartupWindowsFiller);
   m_settingsManager->RegisterSettingOptionsFiller("streamlanguages", CLangInfo::SettingOptionsStreamLanguagesFiller);
@@ -738,6 +757,9 @@ void CSettings::InitializeConditions()
   if (g_sysinfo.HasVideoToolBoxDecoder())
     m_settingsManager->AddCondition("hasvideotoolboxdecoder");
 #endif
+#ifdef HAS_LIBSTAGEFRIGHT
+  m_settingsManager->AddCondition("have_libstagefrightdecoder");
+#endif
 #ifdef TARGET_DARWIN_IOS_ATV2
   if (g_sysinfo.IsAppleTV2())
     m_settingsManager->AddCondition("isappletv2");
@@ -750,6 +772,12 @@ void CSettings::InitializeConditions()
 
   if (g_application.IsStandAlone())
     m_settingsManager->AddCondition("isstandalone");
+
+  if (CAEFactory::SupportsDrain())
+    m_settingsManager->AddCondition("audiosupportsdrain");
+
+  if(CAEFactory::SupportsQualitySetting())
+    m_settingsManager->AddCondition("has_ae_quality_levels");
 
   // add more complex conditions
   m_settingsManager->AddCondition("addonhassettings", AddonHasSettings);
@@ -831,8 +859,24 @@ void CSettings::InitializeISettingCallbacks()
   m_settingsManager->RegisterCallback(&CDisplaySettings::Get(), settingSet);
 
   settingSet.clear();
+  settingSet.insert("videoscreen.stereoscopicmode");
+  m_settingsManager->RegisterCallback(&CStereoscopicsManager::Get(), settingSet);
+
+  settingSet.clear();
+  settingSet.insert("audiooutput.mode");
   settingSet.insert("audiooutput.channels");
+  settingSet.insert("audiooutput.processquality");
   settingSet.insert("audiooutput.guisoundmode");
+  settingSet.insert("audiooutput.stereoupmix");
+  settingSet.insert("audiooutput.ac3passthrough");
+  settingSet.insert("audiooutput.dtspassthrough");
+  settingSet.insert("audiooutput.passthroughaac");
+  settingSet.insert("audiooutput.truehdpassthrough");
+  settingSet.insert("audiooutput.dtshdpassthrough");
+  settingSet.insert("audiooutput.multichannellpcm");
+  settingSet.insert("audiooutput.audiodevice");
+  settingSet.insert("audiooutput.passthroughdevice");
+  settingSet.insert("audiooutput.streamsilence");
   settingSet.insert("lookandfeel.skin");
   settingSet.insert("lookandfeel.skinsettings");
   settingSet.insert("lookandfeel.font");
@@ -889,6 +933,7 @@ void CSettings::InitializeISettingCallbacks()
   settingSet.insert("services.webserverpassword");
   settingSet.insert("services.zeroconf");
   settingSet.insert("services.airplay");
+  settingSet.insert("services.airplayvolumecontrol");
   settingSet.insert("services.useairplaypassword");
   settingSet.insert("services.airplaypassword");
   settingSet.insert("services.upnpserver");

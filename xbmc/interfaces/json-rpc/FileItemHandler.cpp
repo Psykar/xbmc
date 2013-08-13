@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2005-2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -50,12 +50,25 @@ bool CFileItemHandler::GetField(const std::string &field, const CVariant &info, 
   if (result.isMember(field) && !result[field].empty())
     return true;
 
+  // overwrite serialized values
+  if (item)
+  {
+    if (field == "mimetype" && item->GetMimeType().empty())
+    {
+      item->FillInMimeType(false);
+      result[field] = item->GetMimeType();
+      return true;
+    }
+  }
+
+  // check for serialized values
   if (info.isMember(field) && !info[field].isNull())
   {
     result[field] = info[field];
     return true;
   }
 
+  // check if the field requires special handling
   if (item)
   {
     if (item->IsAlbum())
@@ -221,7 +234,7 @@ void CFileItemHandler::HandleFileItemList(const char *ID, bool allowFile, const 
       thumbLoader = new CMusicThumbLoader();
 
     if (thumbLoader != NULL)
-      thumbLoader->Initialize();
+      thumbLoader->OnLoaderStart();
   }
 
   std::set<std::string> fields;
@@ -329,7 +342,7 @@ void CFileItemHandler::HandleFileItem(const char *ID, bool allowFile, const char
       if (thumbLoader != NULL)
       {
         deleteThumbloader = true;
-        thumbLoader->Initialize();
+        thumbLoader->OnLoaderStart();
       }
     }
 
@@ -389,8 +402,12 @@ bool CFileItemHandler::FillFileItemList(const CVariant &parameterObject, CFileIt
         picture.Load(item->GetPath());
         *item->GetPictureInfoTag() = picture;
       }
-      if (item->GetLabel().IsEmpty())
+      if (item->GetLabel().empty())
+      {
         item->SetLabel(CUtil::GetTitleFromPath(file, false));
+        if (item->GetLabel().empty())
+          item->SetLabel(URIUtils::GetFileName(file));
+      }
       list.Add(item);
     }
   }

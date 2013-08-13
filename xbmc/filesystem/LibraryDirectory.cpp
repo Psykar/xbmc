@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2011-2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -140,7 +140,7 @@ bool CLibraryDirectory::GetDirectory(const CStdString& strPath, CFileItemList &i
       items.Add(item);
     }
   }
-  items.Sort(SORT_METHOD_PLAYLIST_ORDER, SortOrderAscending);
+  items.Sort(SortByPlaylistOrder, SortOrderAscending);
   return true;
 }
 

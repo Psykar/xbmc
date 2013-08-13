@@ -1,7 +1,7 @@
 #pragma once
 /*
  *      Copyright (C) 2005-2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -208,6 +208,8 @@ protected:
 
 private:
   CCrystalHD();
+  CCrystalHD(const CCrystalHD& other);
+  CCrystalHD& operator=(const CCrystalHD&);
   static CCrystalHD *m_pInstance;
 
   // bitstream to bytestream (Annex B) conversion support.

@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2005-2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -148,6 +148,9 @@ void OMXPlayerAudio::OpenStream(CDVDStreamInfo &hints, COMXAudioCodecOMX *codec)
   m_stalled         = m_messageQueue.GetPacketCount(CDVDMsg::DEMUXER_PACKET) == 0;
   m_use_passthrough = (CSettings::Get().GetInt("audiooutput.mode") == AUDIO_HDMI) ? true : false ;
   m_use_hw_decode   = g_advancedSettings.m_omxHWAudioDecode;
+  m_format.m_dataFormat    = GetDataFormat(m_hints);
+  m_format.m_sampleRate    = 0;
+  m_format.m_channelLayout = 0;
 }
 
 bool OMXPlayerAudio::CloseStream(bool bWaitForBuffers)
@@ -226,7 +229,7 @@ bool OMXPlayerAudio::Decode(DemuxPacket *pkt, bool bDropPacket)
   const uint8_t *data_dec = pkt->pData;
   int            data_len = pkt->iSize;
 
-  if(!OMX_IS_RAW(m_format.m_dataFormat))
+  if(!OMX_IS_RAW(m_format.m_dataFormat) && !bDropPacket)
   {
     while(!m_bStop && data_len > 0)
     {
@@ -283,15 +286,12 @@ bool OMXPlayerAudio::Decode(DemuxPacket *pkt, bool bDropPacket)
           }
         }
 
-        int n = (m_nChannels * m_hints.bitspersample * m_hints.samplerate)>>3;
-        if (n > 0)
-          m_audioClock += ((double)decoded_size * DVD_TIME_BASE) / n;
         break;
 
       }
     }
   }
-  else
+  else if(!bDropPacket)
   {
     if(CodecChange())
     {

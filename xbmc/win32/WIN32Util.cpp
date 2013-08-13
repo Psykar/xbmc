@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2005-2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -432,16 +432,19 @@ int CWIN32Util::GetDesktopColorDepth()
 CStdString CWIN32Util::GetSpecialFolder(int csidl)
 {
   CStdString strProfilePath;
-  WCHAR szPath[MAX_PATH];
+  static const int bufSize = MAX_PATH;
+  WCHAR* buf = new WCHAR[bufSize];
 
-  if(SUCCEEDED(SHGetFolderPathW(NULL,csidl,NULL,0,szPath)))
+  if(SUCCEEDED(SHGetFolderPathW(NULL, csidl, NULL, SHGFP_TYPE_CURRENT, buf)))
   {
-    g_charsetConverter.wToUTF8(szPath, strProfilePath);
+    buf[bufSize-1] = 0;
+    g_charsetConverter.wToUTF8(buf, strProfilePath);
     strProfilePath = UncToSmb(strProfilePath);
   }
   else
     strProfilePath = "";
-
+  
+  delete[] buf;
   return strProfilePath;
 }
 

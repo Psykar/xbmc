@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2005-2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -656,7 +656,7 @@ bool CExternalPlayer::Initialize(TiXmlElement* pConfig)
     m_warpcursor = WARP_BOTTOM_RIGHT;
 
   CStdString warpCursor;
-  if (XMLUtils::GetString(pConfig, "warpcursor", warpCursor))
+  if (XMLUtils::GetString(pConfig, "warpcursor", warpCursor) && !warpCursor.empty())
   {
     if (warpCursor == "bottomright") m_warpcursor = WARP_BOTTOM_RIGHT;
     else if (warpCursor == "bottomleft") m_warpcursor = WARP_BOTTOM_LEFT;

@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2005-2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1267,9 +1267,6 @@ int CVDPAU::FFGetBuffer(AVCodecContext *avctx, AVFrame *pic)
       return -1;
     }
   }
-
-  if (render == NULL)
-    return -1;
 
   pic->data[1] = pic->data[2] = NULL;
   pic->data[0] = (uint8_t*)render;
